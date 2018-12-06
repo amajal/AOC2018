@@ -3,7 +3,7 @@ import java.io.InputStream
 import kotlin.system.measureTimeMillis
 
 fun main(args: Array<String>) {
-    val inputStream: InputStream = File("Input1.txt").inputStream()
+    val inputStream: InputStream = File("Input.txt").inputStream()
     val listOfNumbers = mutableListOf<Int>()
     val setOfTotals = mutableSetOf<Int>()
     var total = 0

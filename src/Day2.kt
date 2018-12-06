@@ -45,7 +45,7 @@ fun diffInCharacters(id1: String, id2: String): Int {
 }
 
 fun doPart1() {
-    val inputStream: InputStream = File("Input1.txt").inputStream()
+    val inputStream: InputStream = File("Input.txt").inputStream()
     var stringsWithDoubles = 0
     var stringsWithTriples = 0
 

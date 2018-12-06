@@ -3,7 +3,7 @@ import java.io.File
 fun main(args: Array<String>) {
     val mapOfNearestCoordinate = mutableMapOf<Pair<Int, Int>, MutableSet<Pair<Int, Int>>>()
 
-    File("Input1.txt").bufferedReader().useLines { lines ->
+    File("Input.txt").bufferedReader().useLines { lines ->
         lines.forEach { l ->
             val tokens: List<String> = l.split(",")
             val pair = Pair(tokens[0].trim().toInt(), tokens[1].trim().toInt())
