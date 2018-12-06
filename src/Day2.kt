@@ -1,10 +1,8 @@
-package Day2
-
 import java.io.File
 import java.io.InputStream
 
 fun main(args: Array<String>) {
-    //doPart1()
+    doPart1()
     doPart2()
 }
 
@@ -17,7 +15,7 @@ fun doPart2() {
     boxIDs.forEach { id ->
         boxIDs.filter { bid -> bid != id }.forEach {
             if (diffInCharacters(it, id) == 1) {
-                OutputCommonCharacters (it, id)
+                OutputCommonCharacters(it, id)
             }
         }
     }
@@ -54,7 +52,7 @@ fun doPart1() {
     inputStream.bufferedReader().useLines { lines ->
         lines.forEach {
             if (hasFrequencyOf(it, 2))
-                stringsWithDoubles++;
+                stringsWithDoubles++
 
             if (hasFrequencyOf(it, 3))
                 stringsWithTriples++
