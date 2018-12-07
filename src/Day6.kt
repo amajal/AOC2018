@@ -11,8 +11,8 @@ fun main(args: Array<String>) {
         }
     }
 
-    val max_x = mapOfNearestCoordinate.keys.maxBy { it -> it.first }!!.first
-    val max_y = mapOfNearestCoordinate.keys.maxBy { it -> it.second }!!.second
+    val max_x = mapOfNearestCoordinate.keys.maxBy { it.first }!!.first
+    val max_y = mapOfNearestCoordinate.keys.maxBy { it.second }!!.second
 
 
     for (x in 0..max_x) {
