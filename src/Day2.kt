@@ -7,7 +7,7 @@ fun main(args: Array<String>) {
 }
 
 fun doPart2() {
-    val inputStream: InputStream = File("Input1.txt").inputStream()
+    val inputStream: InputStream = File("Input.txt").inputStream()
     val boxIDs = mutableListOf<String>()
 
     inputStream.bufferedReader().useLines { lines -> boxIDs.addAll(lines) }

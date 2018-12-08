@@ -2,7 +2,7 @@ import java.io.File
 
 fun main(args: Array<String>) {
     val stepMap = mutableMapOf<Char, MutableList<Char>>()
-    File("Input1.txt").useLines { l ->
+    File("Input.txt").useLines { l ->
         l.forEach {
             val parent = it[5]
             val child = it[it.length - 12]
