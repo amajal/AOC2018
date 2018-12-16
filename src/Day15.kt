@@ -9,13 +9,13 @@ fun main(args: Array<String>) {
     val pieces = result.second
 
 
-    repeat(3)
+    repeat(1)
     {
         println("\nRound $it")
         print(board, pieces)
 
-        pieces.sortBy { p -> p.Col }
-        pieces.sortBy { p -> p.Row }
+        pieces.sortBy { p -> p.Point.Col }
+        pieces.sortBy { p -> p.Point.Row }
 
         val piecesForLoop = pieces.toMutableList()
 
@@ -44,14 +44,23 @@ fun move(currentPiece: Piece, enemies: List<Piece>, pieces: MutableList<Piece>, 
     if (enemiesInRange.count() > 0)
         return
 
-    val squaresInRange = mutableMapOf<Pair<Int, Int>, Int>()
-    val currentPoint = Pair(currentPiece.Col, currentPiece.Row)
+    val squaresInRange = mutableMapOf<Point, Int>()
+    val currentPoint = currentPiece.Point
+
+    val barriers = getBarriers(pieces, board)
 
     enemies.forEach {
+
+        var matrix = getShortestDistanceForAllPoints()
+
         for (move in listOf(Pair(0, -1), Pair(0, 1), Pair(-1, 0), Pair(1, 0))) {
-            val targetPoint = Pair(it.Col + move.first, it.Row + move.second)
-            val distance = findShortestDistance(currentPoint, targetPoint, mutableListOf(), pieces, board)
-            squaresInRange[targetPoint] = distance
+            val nextPoint = Point(currentPoint.Row + move.first, currentPoint.Col + move.second)
+
+            if (board[nextPoint.Row][nextPoint.Col] == '#' || pieces.count { p -> p.Point == nextPoint } > 0)
+                continue
+
+            val distance = findShortestDistance(currentPoint, it.Point, mutableListOf(), pieces, board)
+            squaresInRange[nextPoint] = distance
         }
     }
 
@@ -61,21 +70,31 @@ fun move(currentPiece: Piece, enemies: List<Piece>, pieces: MutableList<Piece>, 
         return
 
     val nearestSquares = reachableSquares.minBy { it.value }!!
+    currentPiece.Point = nearestSquares.key
+}
 
-    currentPiece.Row = nearestSquares.key.first
-    currentPiece.Col = nearestSquares.key.second
+fun getBarriers(pieces: MutableList<Piece>, board: MutableList<MutableList<Char>>): Any {
+    val barriers = mutableListOf<Point>()
+    pieces.forEach { barriers.add(it.Point) }
 
+    for (i in 0..board.size)
+    {
+        for (j in 0..board.size)
+        {
+            if (board[i][j] == '#')
+                barriers.add(Point(i, j))
+        }
+    }
+
+    return barriers
 }
 
 
-fun findShortestDistance(currentPoint: Pair<Int, Int>, targetPoint: Pair<Int, Int>, visited: MutableList<Pair<Int, Int>>, pieces: MutableList<Piece>, board: MutableList<MutableList<Char>>): Int {
+fun findShortestDistance(currentPoint: Point, targetPoint: Point, visited: MutableList<Point>, pieces: MutableList<Piece>, board: MutableList<MutableList<Char>>): Int {
     if (currentPoint == targetPoint)
         return 0
 
-    if (board[currentPoint.first][currentPoint.second] != '.')
-        return Int.MAX_VALUE
-
-    if (pieces.count { it.Col == currentPoint.first && it.Row == currentPoint.second } != 0)
+    if (visited.contains(currentPoint))
         return Int.MAX_VALUE
 
     visited.add(currentPoint)
@@ -83,7 +102,14 @@ fun findShortestDistance(currentPoint: Pair<Int, Int>, targetPoint: Pair<Int, In
     val paths = mutableListOf<Int>()
 
     for (c in listOf(Pair(0, -1), Pair(0, 1), Pair(1, 0), Pair(-1, 0))) {
-        val nextPoint = Pair(currentPoint.first + c.first, currentPoint.second + c.second)
+        val nextPoint = Point(currentPoint.Row + c.first, currentPoint.Col + c.second)
+
+        if (nextPoint == targetPoint)
+            return 1
+
+        if (board[nextPoint.Row][nextPoint.Col] == '#' || pieces.count { it.Point == nextPoint } > 0)
+            return Int.MAX_VALUE
+
         var shortestDistanceFromNextPoint = findShortestDistance(nextPoint, targetPoint, visited.toMutableList(), pieces, board)
         if (shortestDistanceFromNextPoint != Int.MAX_VALUE)
             shortestDistanceFromNextPoint++
@@ -91,7 +117,7 @@ fun findShortestDistance(currentPoint: Pair<Int, Int>, targetPoint: Pair<Int, In
         paths.add(shortestDistanceFromNextPoint)
     }
 
-    return paths.min()!!
+    return paths.min() ?: Int.MAX_VALUE
 }
 
 fun attack(currentPiece: Piece, enemies: List<Piece>) {
@@ -103,8 +129,8 @@ fun attack(currentPiece: Piece, enemies: List<Piece>) {
     // todo
     val weakestEnemyInRange = enemiesInRange
             .sortedBy { p -> p.HP }
-            .sortedBy { p -> p.Row }
-            .sortedBy { p -> p.Col }
+            .sortedBy { p -> p.Point.Col }
+            .sortedBy { p -> p.Point.Row }
             .first()
 
     weakestEnemyInRange.HP -= 3
@@ -112,15 +138,15 @@ fun attack(currentPiece: Piece, enemies: List<Piece>) {
 
 private fun getEnemiesInRange(enemies: List<Piece>, currentPiece: Piece): List<Piece> {
     return enemies.filter { p ->
-        (Math.abs(p.Col - currentPiece.Col) == 1 && p.Row == currentPiece.Row) ||
-                (Math.abs(p.Row - currentPiece.Row) == 1 && p.Col == currentPiece.Col)
+        (Math.abs(p.Point.Col - currentPiece.Point.Col) == 1 && p.Point.Row == currentPiece.Point.Row) ||
+                (Math.abs(p.Point.Row - currentPiece.Point.Row) == 1 && p.Point.Col == currentPiece.Point.Col)
     }
 }
 
 fun print(board: MutableList<MutableList<Char>>, pieces: MutableList<Piece>) {
     for (i in 0 until board.size) {
         for (j in 0 until board[i].size) {
-            val matchPiece = pieces.filter { p -> p.Row == i && p.Col == j }
+            val matchPiece = pieces.filter { p -> p.Point.Row == i && p.Point.Col == j }
             if (matchPiece.count() == 0)
                 print(board[i][j])
             else
@@ -140,7 +166,7 @@ fun initialiseBoard(input: List<String>): Pair<MutableList<MutableList<Char>>, M
             var current = input[i][j]
 
             if (current == 'E' || current == 'G') {
-                pieces.add(Piece(current, 200, i, j))
+                pieces.add(Piece(current, 200, Point(i, j)))
                 current = '.'
             }
 
@@ -150,4 +176,5 @@ fun initialiseBoard(input: List<String>): Pair<MutableList<MutableList<Char>>, M
     return Pair(board, pieces)
 }
 
-data class Piece(val Type: Char, var HP: Int, var Row: Int, var Col: Int)
+data class Piece(val Type: Char, var HP: Int, var Point: Point)
+data class Point(var Row: Int, var Col: Int)
