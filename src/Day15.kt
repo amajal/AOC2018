@@ -1,4 +1,5 @@
 import java.io.File
+import kotlin.math.min
 
 fun main(args: Array<String>) {
     val input = File("Demo.txt").readLines()
@@ -7,10 +8,15 @@ fun main(args: Array<String>) {
     val board = result.first
     val pieces = result.second
 
-    print(board, pieces)
 
-    repeat(1)
+    repeat(3)
     {
+        println("\nRound $it")
+        print(board, pieces)
+
+        pieces.sortBy { p -> p.Col }
+        pieces.sortBy { p -> p.Row }
+
         val piecesForLoop = pieces.toMutableList()
 
         while (piecesForLoop.count() > 0) {
@@ -24,44 +30,41 @@ fun main(args: Array<String>) {
             pieces.removeAll { p -> p.HP < 1 }
             piecesForLoop.removeAll { p -> p.HP < 1 }
 
-            print(board, pieces)
+            //print(board, pieces)
         }
-
-        pieces.sortBy { p -> p.Row }
-        pieces.sortBy { p -> p.Col }
     }
+
+    println("\nFinal")
+    print(board, pieces)
 }
 
 fun move(currentPiece: Piece, enemies: List<Piece>, pieces: MutableList<Piece>, board: MutableList<MutableList<Char>>) {
     val enemiesInRange = getEnemiesInRange(enemies, currentPiece)
-    val reachableEnemies = mutableMapOf<Piece, Pair<Pair<Int, Int>, Int>>()
-    val currentPoint = Pair(currentPiece.Col, currentPiece.Row)
 
     if (enemiesInRange.count() > 0)
         return
 
+    val squaresInRange = mutableMapOf<Pair<Int, Int>, Int>()
+    val currentPoint = Pair(currentPiece.Col, currentPiece.Row)
+
     enemies.forEach {
-        val targetPoint = Pair(it.Col, it.Row)
-        var shortestDistanceToEnemy = Pair(Pair(-1, -1), Int.MAX_VALUE)
-
-        for (c in listOf(Pair(-1, 0), Pair(1, 0), Pair(0, -1), Pair(0, 1))) {
-            val nextPoint = Pair(currentPoint.first + c.first, currentPoint.second + c.second)
-            val shortestDistanceForDirection = findShortestDistance(nextPoint, targetPoint, mutableListOf(), pieces, board)
-
-            if (shortestDistanceForDirection < shortestDistanceToEnemy.second)
-                shortestDistanceToEnemy = Pair(c, shortestDistanceForDirection)
+        for (move in listOf(Pair(0, -1), Pair(0, 1), Pair(-1, 0), Pair(1, 0))) {
+            val targetPoint = Pair(it.Col + move.first, it.Row + move.second)
+            val distance = findShortestDistance(currentPoint, targetPoint, mutableListOf(), pieces, board)
+            squaresInRange[targetPoint] = distance
         }
-
-        if (shortestDistanceToEnemy.second != Int.MAX_VALUE)
-            reachableEnemies[it] = shortestDistanceToEnemy
     }
 
-    //todo
-    print("done finding enemies")
-            //val nearestEnemy = reachableEnemies.minBy { it.value.second }!!.value
+    val reachableSquares = squaresInRange.filter { it.value < Int.MAX_VALUE }
 
-            //currentPiece.Col = nearestEnemy[0].first
-            //currentPiece.Row = nearestEnemy[0].second
+    if (reachableSquares.isEmpty())
+        return
+
+    val nearestSquares = reachableSquares.minBy { it.value }!!
+
+    currentPiece.Row = nearestSquares.key.first
+    currentPiece.Col = nearestSquares.key.second
+
 }
 
 
@@ -69,13 +72,7 @@ fun findShortestDistance(currentPoint: Pair<Int, Int>, targetPoint: Pair<Int, In
     if (currentPoint == targetPoint)
         return 0
 
-    if (currentPoint.first < 0 || currentPoint.first > board.size - 1)
-        return Int.MAX_VALUE
-
-    if (currentPoint.second < 0 || currentPoint.second > board[0].size - 1)
-        return Int.MAX_VALUE
-
-    if (visited.contains(currentPoint) || board[currentPoint.first][currentPoint.second] != '.')
+    if (board[currentPoint.first][currentPoint.second] != '.')
         return Int.MAX_VALUE
 
     if (pieces.count { it.Col == currentPoint.first && it.Row == currentPoint.second } != 0)
@@ -83,14 +80,13 @@ fun findShortestDistance(currentPoint: Pair<Int, Int>, targetPoint: Pair<Int, In
 
     visited.add(currentPoint)
 
-
     val paths = mutableListOf<Int>()
 
-    for (c in listOf(Pair(-1, 0), Pair(1, 0), Pair(0, -1), Pair(0, 1))) {
+    for (c in listOf(Pair(0, -1), Pair(0, 1), Pair(1, 0), Pair(-1, 0))) {
         val nextPoint = Pair(currentPoint.first + c.first, currentPoint.second + c.second)
         var shortestDistanceFromNextPoint = findShortestDistance(nextPoint, targetPoint, visited.toMutableList(), pieces, board)
         if (shortestDistanceFromNextPoint != Int.MAX_VALUE)
-            shortestDistanceFromNextPoint ++
+            shortestDistanceFromNextPoint++
 
         paths.add(shortestDistanceFromNextPoint)
     }
